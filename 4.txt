@@ -1,0 +1,28 @@
+UI库的按需加载:
+这里以vant的按需加载为例，演示vue中ui库怎样进行按需加载：
+安装： cnpm i vant -S
+安装babel-plugin-import插件使其按需加载：  cnpm i babel-plugin-import -D
+在 .babelrc文件中中添加插件配置 ：
+libraryDirectory { 
+    
+    "plugins": [ 
+        // 这里是原来的代码部分
+        // …………
+
+        // 这里是要我们配置的代码
+        ["import", 
+            { 
+                "libraryName": "vant", 
+                "libraryDirectory": "es", 
+                "style": true 
+            }
+        ] 
+    ] 
+}
+
+// 按需引入vant组件
+import {   
+    DatetimePicker,   
+    Button,   
+    List 
+} from 'vant';

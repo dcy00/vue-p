@@ -1,0 +1,6 @@
+如何优雅的只在当前页面中覆盖ui库中组件的样式
+通过深度选择器解决。例如修改上图中组件里的van-ellipsis类的样式，可以这样做
+.van-tabs /deep/ .van-ellipsis { color: blue};
+编译后的结果就是：
+见图5
+这里的深度选择器/deep/是因为我用的less语言，如果你没有使用less/sass等，可以用>>>符号
