@@ -1,0 +1,85 @@
+自定义组件（父子组件）的双向数据绑定
+说到父子组件的通信，大家一定都不陌生了：父组件通过props向子组件传值，子组件通过emit触发父组件自定义事件。
+但是这里要说的是父子组件使用v-model实现的通信。相信大家在使用别人的组件库的时候，
+经常是通过v-model来控制一个组件显示隐藏的效果等，例如弹窗。下面就一步一步解开v-model的神秘面纱。
+
+提到v-model首先想到的就是我们对于表单用户数据的双向数据绑定，操作起来很简洁很粗暴，例如：
+<input type="text" v-model="msg">
+
+data () {            
+    return {                
+        msg: ''            
+    }        
+}
+其实v-model是个语法糖，上面这一段代码和下面这一段代码是一样的效果：
+<input type="text" :value="msg" @input="msg = $event.target.value">
+data () {
+    return {
+        msg: '' 
+    }        
+},
+由此可以看出，v-model="msg"实则是 :value="msg" @input="msg = $event.target.value"的语法糖。
+这里其实就是监听了表单的input事件，然后修改:value对应的值。除了在输入表单上面可以使用v-model外，
+在组件上也是可以使用的，
+
+以上原理实现方法，写法1：
+父组件用法：
+<empty v-model="msg"></empty>
+子组件写法：
+// 点击该按钮触发父子组件的数据同步
+<div class="share-btn" @click="confirm">确定</div>
+
+// 接收父组件传递的value值
+// 注意，这种实现方法，这里只能使用value属性名
+props: {            
+    value: {                
+        type: Boolean,                
+        default: false            
+    }        
+},
+methods: {            
+    confirm () {                
+        // 双向数据绑定父组件:value对应的值 
+        // 通过$emit触发父组件input事件，第二个参数为传递给父组件的值，这里传递了一个false值 
+        // 可以理解为最上面展示的@input="msg = $event.target.value"这个事件
+        // 即触发父组件的input事件，并将传递的值‘false’赋值给msg             
+        this.$emit('input', false)            
+    }        
+}
+这种方式实现了父子组件见v-model双向数据绑定的操作，例如你可以试一下实现一个全局弹窗组件的操作，
+通过v-model控制弹窗的显示隐藏，因为你要在页面内进行某些操作将他显示出来，控制其隐藏的代码是写在组件里面的，
+当组件隐藏了对应的也要父组件对应的值改变。以上这种方式实现的父子组件的v-model通信，虽可行，
+但限制了我们必须popos接收的属性名为value和emit触发的必须为input，这样就容易有冲突，特别是在表单里面。所以，
+为了更优雅的使用v-model通信而解决冲突的问题，我们可以通过在子组件中使用model选项，下面演示写法2：
+父组件写法：
+<empty v-model="msg"></empty>
+子组件写法：
+<div class="share-btn" @click="confirm">确定</div>
+
+// model选项用来避免冲突
+// prop属性用来指定props属性中的哪个值用来接收父组件v-model传递的值
+// 例如这里用props中的show来接收父组件传递的v-model值
+// event：为了方便理解，可以简单理解为父组件@input的别名，从而避免冲突
+// event的值对应了你emit时要提交的事件名，你可以叫aa，也可以叫bb，但是要命名要有意义哦！！！
+model: {            
+    prop: 'show',            
+    event: 'changed'        
+},
+props: {
+    // 由于model选项中的prop属性指定了，所以show接收的是父组件v-model传递的值            
+    show: {                
+        type: Boolean,                
+        default: false            
+    }        
+},        
+methods: {            
+    confirm () {                
+        // 双向数据绑定父组件传递的值
+        // 第一个参数，对应model选项的event的值，你可以叫aa，bbb，ccc，起名随你 
+        this.$emit('changed', false)            
+    }        
+}
+
+PS:
+最后，实现双向数据绑定的方式其实还有.sync，这个属性一开始是有的，后来由于被认为或破坏单向数据流被删除了，
+但最后证明他还是有存在意义的，所以在2.3版本又加回来了。

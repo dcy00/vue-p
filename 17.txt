@@ -1,0 +1,29 @@
+Hiper：一款令人愉悦的性能分析工具
+hiper工具的测试结果,,从中我们可以看到DNS查询耗时、TCP连接耗时、第一个Byte到达浏览器的用时、页面下载耗时、
+DOM Ready之后又继续下载资源的耗时、白屏时间、DOM Ready 耗时、页面加载总耗时。
+
+cnpm install hiper -g
+使用：终端输入命令：hiper 测试的网址
+
+# 当我们省略协议头时，默认会在url前添加`https://`
+
+ # 最简单的用法
+ hiper baidu.com
+
+ # 如何url中含有任何参数，请使用双引号括起来
+ hiper "baidu.com?a=1&b=2"
+
+ #  加载指定页面100次
+ hiper -n 100 "baidu.com?a=1&b=2"
+
+ #  禁用缓存加载指定页面100次
+ hiper -n 100 "baidu.com?a=1&b=2" --no-cache
+
+ #  禁JavaScript加载指定页面100次
+ hiper -n 100 "baidu.com?a=1&b=2" --no-javascript
+ 
+ #  使用GUI形式加载指定页面100次
+ hiper -n 100 "baidu.com?a=1&b=2" -H false
+
+ #  使用指定useragent加载网页100次
+ hiper -n 100 "baidu.com?a=1&b=2" -u "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
