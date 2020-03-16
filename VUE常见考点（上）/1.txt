@@ -1,0 +1,107 @@
+1、页面中定义一个定时器，在哪个阶段清除？
+A：在beforeDestory中销毁定时器。
+@1、为什么要销毁它：在页面 a 中写了一个定时器，比如每隔一秒钟打印一次 1，
+当我点击按钮进入页面 b 的时候，会发现定时器依然在执行，这是非常消耗性能的。
+@2、解决方案1：
+mounted(){
+ this.timer = setInterval(()=>{
+    console.log(1)
+ },1000)
+},
+beforeDestroy(){
+ clearInterval(this.timer)
+}
+该方案有两点不好的地方，引用尤大的话来说就是：
+它需要在这个组件实例中保存这个 timer，如果可以的话最好只有生命周期钩子可以访问到它。这并不算严重的问题，但是它可以被视为杂物。
+我们的建立代码独立于我们的清理代码，这使得我们比较难于程序化的清理我们建立的所有东西
+@3（推荐）、该方法是通过$once 这个事件侦听器在定义完定时器之后的位置来清除定时器
+mounted(){
+ const timer = setInterval(()=>{
+    console.log(1)
+ },1000)
+ this.$once('hook:beforeDestroy',()=>{
+  clearInterval(timer)
+ })
+}
+官网参考链接:https://cn.vuejs.org/v2/guide/components-edge-cases.html
+2、父组件如何获取子组件的数据，子组件如何获取父组件的数据，父子组件如何传值？
+@1、方案1：$children
+$children 用来访问子组件实例，要知道一个组件的子组件可能是不唯一的，
+所以它的返回值是数组。
+<template>
+  <div class="index">
+    <Header></Header>
+    <HelloWorld :message="message"></HelloWorld>
+    <button @click="goPro">跳转</button>
+  </div>
+</template>
+mounted(){
+ console.log(this.$children)
+}
+此时打印的是一个数组，可以for遍历出所需要的数据
+缺点：无法确定子组件的顺序，也不是响应式的。如果你确切的知道要访问子组件建议使用$refs。
+@2、方案2：$refs
+<HelloWorld ref="hello" :message="message"></HelloWorld>
+调用 helloworld 子组件的时候直接定义一个 ref，这样就可以通过 this.$refs 获取所需要的的数据。
+this.$refs.hello.属性
+this.$refs.hello.方法
+   @2.2、子组件如何主动获取父组件中的数据？
+@3、类似children
+this.$parent.属性
+this.$parent.方法
+@4、inheritAttrs：这是@2.4 新增的属性和接口。
+inheritAttrs 属性控制子组件 html 属性上是否显示父组件的提供的属性
+@5、provide/inject适用于隔代组件通信，尤其是获取祖先组件的数据较为方便。
+<template>
+  <div>
+    {{demo}}
+  </div>
+</template>
+
+<script>
+  export default {
+    name: "",
+    inject: ['for'],
+    data() {
+      return {
+        demo: this.for
+      }
+    }
+  }
+</script>
+3、自定义指令如何定义，它的生命周期是什么？
+通过 Vue.directive() 来定义全局指令
+常用的钩子生命周期：
+bind：一旦指令附加到元素时触发
+inserted:一旦元素被添加到父元素时触发
+update: 每当元素本身更新(但是子元素还未更新)时触发
+componentUpdate: 每当组件和子组件被更新时触发
+unbind: 一旦指令被移除时触发。
+bind 和 update 也许是这五个里面最有用的两个钩子了
+每个钩子都有 el, binding, 和 vnode 参数可用.
+update 和 componentUpdated 钩子还暴露了 oldVnode, 以区分传递的旧值和较新的值.
+el 就是所绑定的元素.
+binding 是一个保护传入钩子的参数的对象. 有很多可用的参数, 包括 name, value, oldValue, expression, arguments, arg 及修饰语.
+vnode 有一个更不寻常的用例, 它可用于你需要直接引用到虚拟 DOM 中的节点.
+binding 和 vnode 都应该被视为只读.
+4、vue的生命周期：
+@1、beforeCreate()、实例创建前，这个阶段实例的data和methods是读不到的。
+@2、created():实例创建后，这个阶段已经完成数据观测，属性和方法的运算，watch/event 事件回调，mount 挂载阶段还没有开始。
+$el 属性目前不可见，数据并没有在 DOM 元素上进行渲染。
+created 完成之后，进行 template 编译等操作，将 template 编译为 render 函数，有了 render 函数后才会执行 beforeMount（）
+beforeMount（）：在挂载开始之前被调用：相关的 render 函数首次被调用
+@3、mounted（）：挂载之后调用，el 选项的 DOM 节点被新创建的 vm.$el 替换，并挂载到实例上去之后调用此生命周期函数，
+此时实例的数据在 DOM 节点上进行渲染
+@4、后续的钩子函数执行的过程都是需要外部的触发才会执行
+有数据的变化，会调用 beforeUpdate，然后经过 Virtual Dom，最后 updated 更新完毕，
+当组件被销毁的时候，会调用 beforeDestory，以及 destoryed。
+5、watch和computed的区别？
+computed:
+&1、有缓存机制；&2、不能接受参数；&3、可以依赖其他computed，甚至是其他组件的data;&4、不能与data中的属性重复
+watch:
+&1、可以接受两个参数；&2、监听时可触发一个回调，并做一些事情；&3、监听的属性必须是存在的；&4、允许异步
+watch 配置：handler、deep（是否深度）、immeditate （是否立即执行）
+总结：
+当有一些数据需要随着另外一些数据变化时，建议使用 computed
+当有一个通用的响应数据变化的时候，要执行一些业务逻辑或异步操作的时候建议使用 watch
+6、
